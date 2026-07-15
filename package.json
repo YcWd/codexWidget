@@ -1,0 +1,14 @@
+{
+  "name": "codex-usage-scriptable-widget",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Codex usage provider and Apple Fitness style Scriptable widget",
+  "scripts": {
+    "usage": "node provider/codex.js",
+    "check": "node --check provider/codex.js",
+    "test": "node --test test/provider.test.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

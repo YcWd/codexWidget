@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "ok": true,
+  "offline": false,
+  "source": "sample",
+  "updatedAt": "2026-07-15T02:30:00.000Z",
+  "checkedAt": "2026-07-15T02:30:00.000Z",
+  "account": {
+    "plan": "plus"
+  },
+  "limits": {
+    "fiveHour": {
+      "usedPercent": 28,
+      "remainingPercent": 72,
+      "windowSeconds": 18000,
+      "resetAt": "2026-07-15T05:00:00.000Z",
+      "resetInSeconds": 9000
+    },
+    "week": {
+      "usedPercent": 43,
+      "remainingPercent": 57,
+      "windowSeconds": 604800,
+      "resetAt": "2026-07-19T00:00:00.000Z",
+      "resetInSeconds": 336600
+    }
+  },
+  "tokens": {
+    "source": "latestSession",
+    "consumed": 184320,
+    "remaining": 127840,
+    "contextUsed": 130560,
+    "contextWindow": 258400,
+    "input": 179840,
+    "cachedInput": 155520,
+    "output": 4480,
+    "reasoningOutput": 2304,
+    "capturedAt": "2026-07-15T02:29:42.000Z"
+  },
+  "credits": null,
+  "error": null
+}
