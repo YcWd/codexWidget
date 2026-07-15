@@ -183,7 +183,7 @@ async function fetchUsage(accessToken, accountId) {
     try {
       const usage = await requestJson(url, { headers: buildUsageHeaders(accessToken, accountId) });
       const rateLimit = usage && usage.rate_limit;
-      if (!rateLimit || !rateLimit.primary_window || !rateLimit.secondary_window) {
+      if (!rateLimit || (!rateLimit.primary_window && !rateLimit.secondary_window)) {
         throw new ProviderError("PARSE", `usage 响应缺少额度窗口: ${url}`);
       }
       return usage;
@@ -280,9 +280,37 @@ function normalizeWindow(window, now) {
   };
 }
 
+/** 按窗口时长识别 5 小时与周额度，兼容服务端只返回其中一个窗口。 */
+function classifyUsageWindows(rateLimit) {
+  const entries = [
+    { position: "primary", value: rateLimit.primary_window || null },
+    { position: "secondary", value: rateLimit.secondary_window || null },
+  ].filter((entry) => entry.value);
+  let fiveHour = null;
+  let week = null;
+
+  for (const entry of entries) {
+    const seconds = Number(entry.value.limit_window_seconds) || 0;
+    if (!week && seconds >= 5 * 24 * 60 * 60) {
+      week = entry.value;
+    } else if (!fiveHour && seconds > 0 && seconds <= 24 * 60 * 60) {
+      fiveHour = entry.value;
+    }
+  }
+
+  const unclassified = entries.filter((entry) => entry.value !== fiveHour && entry.value !== week);
+  for (const entry of unclassified) {
+    if (!week && entry.position === "secondary") week = entry.value;
+    else if (!fiveHour) fiveHour = entry.value;
+    else if (!week) week = entry.value;
+  }
+  return { fiveHour, week };
+}
+
 /** 将原始 usage 响应转换为标准输出结构。 */
 function normalizeUsage(usage, tokenUsage, now = new Date()) {
   const limits = usage.rate_limit || {};
+  const windows = classifyUsageWindows(limits);
   const credits = usage.credits;
   return {
     schemaVersion: 1,
@@ -295,8 +323,8 @@ function normalizeUsage(usage, tokenUsage, now = new Date()) {
       plan: String(usage.plan_type || usage.account_plan || "unknown"),
     },
     limits: {
-      fiveHour: normalizeWindow(limits.primary_window, now),
-      week: normalizeWindow(limits.secondary_window, now),
+      fiveHour: normalizeWindow(windows.fiveHour, now),
+      week: normalizeWindow(windows.week, now),
     },
     tokens: tokenUsage,
     credits: credits == null ? null : credits,
@@ -372,7 +400,7 @@ async function readLatestTokenUsage() {
 async function loadCache(outputPath) {
   try {
     const cache = JSON.parse(await fs.readFile(path.resolve(outputPath), "utf8"));
-    const hasLimits = cache && cache.limits && cache.limits.fiveHour && cache.limits.week;
+    const hasLimits = cache && cache.limits && (cache.limits.fiveHour || cache.limits.week);
     const isGeneratedData = cache && cache.source !== "sample" && cache.source !== "unavailable";
     return cache && cache.schemaVersion === 1 && hasLimits && isGeneratedData ? cache : null;
   } catch {
@@ -468,6 +496,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+  classifyUsageWindows,
   extractAccountId,
   normalizeUsage,
   normalizeWindow,

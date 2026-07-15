@@ -3,6 +3,7 @@
 const assert = require("node:assert/strict");
 const test = require("node:test");
 const {
+  classifyUsageWindows,
   extractAccountId,
   normalizeUsage,
   normalizeWindow,
@@ -37,8 +38,8 @@ test("normalizeUsage produces the stable schema", () => {
   const result = normalizeUsage({
     plan_type: "plus",
     rate_limit: {
-      primary_window: { used_percent: 20, reset_at: 1_768_000_000 },
-      secondary_window: { used_percent: 40, reset_at: 1_768_500_000 },
+      primary_window: { used_percent: 20, limit_window_seconds: 18_000, reset_at: 1_768_000_000 },
+      secondary_window: { used_percent: 40, limit_window_seconds: 604_800, reset_at: 1_768_500_000 },
     },
   }, { consumed: 100, remaining: 200 }, now);
 
@@ -47,6 +48,30 @@ test("normalizeUsage produces the stable schema", () => {
   assert.equal(result.limits.fiveHour.remainingPercent, 80);
   assert.equal(result.limits.week.remainingPercent, 60);
   assert.deepEqual(result.tokens, { consumed: 100, remaining: 200 });
+});
+
+test("normalizeUsage accepts a weekly-only primary window", () => {
+  const now = new Date("2026-07-15T00:00:00.000Z");
+  const result = normalizeUsage({
+    plan_type: "plus",
+    rate_limit: {
+      primary_window: { used_percent: 25, limit_window_seconds: 604_800, reset_at: 1_768_500_000 },
+      secondary_window: null,
+    },
+  }, null, now);
+
+  assert.equal(result.limits.fiveHour, null);
+  assert.equal(result.limits.week.remainingPercent, 75);
+});
+
+test("classifyUsageWindows preserves an unlabelled primary and secondary pair", () => {
+  const primary = { used_percent: 10 };
+  const secondary = { used_percent: 20 };
+
+  assert.deepEqual(classifyUsageWindows({ primary_window: primary, secondary_window: secondary }), {
+    fiveHour: primary,
+    week: secondary,
+  });
 });
 
 test("parseArgs rejects an option without a path", () => {
