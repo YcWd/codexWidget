@@ -182,8 +182,9 @@ async function fetchUsage(accessToken, accountId) {
   for (const url of configuredUrls) {
     try {
       const usage = await requestJson(url, { headers: buildUsageHeaders(accessToken, accountId) });
-      if (!usage || !usage.rate_limit) {
-        throw new ProviderError("PARSE", `usage 响应缺少 rate_limit: ${url}`);
+      const rateLimit = usage && usage.rate_limit;
+      if (!rateLimit || !rateLimit.primary_window || !rateLimit.secondary_window) {
+        throw new ProviderError("PARSE", `usage 响应缺少额度窗口: ${url}`);
       }
       return usage;
     } catch (error) {
@@ -200,7 +201,14 @@ async function writeJsonAtomic(filePath, value) {
   const absolutePath = path.resolve(filePath);
   await fs.mkdir(path.dirname(absolutePath), { recursive: true });
   const temporaryPath = `${absolutePath}.${process.pid}.tmp`;
+  let existingMode = null;
+  try {
+    existingMode = (await fs.stat(absolutePath)).mode;
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
   await fs.writeFile(temporaryPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  if (existingMode != null) await fs.chmod(temporaryPath, existingMode);
   await fs.rename(temporaryPath, absolutePath);
 }
 
@@ -250,6 +258,11 @@ function clampPercent(value) {
   const number = Number(value);
   if (!Number.isFinite(number)) return 0;
   return Math.round(Math.min(100, Math.max(0, number)) * 10) / 10;
+}
+
+function numberOrNull(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 }
 
 /** 将接口窗口转换为稳定的 JSON 字段。 */
@@ -337,18 +350,18 @@ async function readLatestTokenUsage() {
     const info = payload.info;
     const total = info.total_token_usage || {};
     const last = info.last_token_usage || {};
-    const contextWindow = Number(info.model_context_window) || null;
-    const contextUsed = Number(last.total_tokens) || null;
+    const contextWindow = numberOrNull(info.model_context_window);
+    const contextUsed = numberOrNull(last.total_tokens);
     return {
       source: "latestSession",
-      consumed: Number(total.total_tokens) || 0,
+      consumed: numberOrNull(total.total_tokens),
       remaining: contextWindow && contextUsed != null ? Math.max(0, contextWindow - contextUsed) : null,
       contextUsed,
       contextWindow,
-      input: Number(total.input_tokens) || 0,
-      cachedInput: Number(total.cached_input_tokens) || 0,
-      output: Number(total.output_tokens) || 0,
-      reasoningOutput: Number(total.reasoning_output_tokens) || 0,
+      input: numberOrNull(total.input_tokens),
+      cachedInput: numberOrNull(total.cached_input_tokens),
+      output: numberOrNull(total.output_tokens),
+      reasoningOutput: numberOrNull(total.reasoning_output_tokens),
       capturedAt: event.timestamp || null,
     };
   }
@@ -359,7 +372,9 @@ async function readLatestTokenUsage() {
 async function loadCache(outputPath) {
   try {
     const cache = JSON.parse(await fs.readFile(path.resolve(outputPath), "utf8"));
-    return cache && cache.schemaVersion === 1 && cache.limits ? cache : null;
+    const hasLimits = cache && cache.limits && cache.limits.fiveHour && cache.limits.week;
+    const isGeneratedData = cache && cache.source !== "sample" && cache.source !== "unavailable";
+    return cache && cache.schemaVersion === 1 && hasLimits && isGeneratedData ? cache : null;
   } catch {
     return null;
   }
@@ -385,7 +400,6 @@ function printHelp() {
 
 /** 执行数据读取、刷新、标准化与缓存。 */
 async function run(options) {
-  const previous = await loadCache(options.outputPath);
   let auth = await loadAuth(options.authPath);
   let usage;
 

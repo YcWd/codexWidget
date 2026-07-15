@@ -49,7 +49,12 @@ function isValidUsage(data) {
 
 /** 优先拉取参数 URL，失败时回退 iCloud 缓存。 */
 async function loadUsage() {
-  const cached = await readLocalUsage();
+  let cached = null;
+  try {
+    cached = await readLocalUsage();
+  } catch (error) {
+    console.warn(`忽略无效的本地缓存: ${error.message || error}`);
+  }
   const parameter = typeof args.widgetParameter === "string" ? args.widgetParameter.trim() : "";
   const dataURL = parameter || SETTINGS.dataURL;
   let data = cached;
@@ -66,7 +71,11 @@ async function loadUsage() {
       }
       if (!isValidUsage(remote)) throw new Error("usage.json 格式无效");
       data = remote;
-      await saveLocalUsage(remote);
+      try {
+        await saveLocalUsage(remote);
+      } catch (error) {
+        console.warn(`缓存 usage.json 失败: ${error.message || error}`);
+      }
     } catch (error) {
       if (!cached) throw error;
       data = cached;
