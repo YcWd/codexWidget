@@ -290,8 +290,15 @@ function normalizeDirectUsage(usage) {
     },
     tokens: null,
     credits: usage.credits == null ? null : usage.credits,
+    resetCredits: normalizeDirectResetCredits(usage.rate_limit_reset_credits),
     error: null,
   };
+}
+
+/** 提取手机接口返回的可用使用限制重置次数。 */
+function normalizeDirectResetCredits(value) {
+  if (!value || !Number.isFinite(Number(value.available_count))) return null;
+  return { availableCount: Number(value.available_count) };
 }
 
 /** 使用 Keychain token 直接从手机获取用量。 */
@@ -432,13 +439,9 @@ function activityRingsImage(size, fiveHour, week) {
   return context.getImage();
 }
 
-function formatTokens(value) {
-  if (value == null) return "--";
-  const number = Number(value);
-  if (!Number.isFinite(number)) return "--";
-  if (number >= 1_000_000) return `${(number / 1_000_000).toFixed(number >= 10_000_000 ? 1 : 2)}M`;
-  if (number >= 1_000) return `${(number / 1_000).toFixed(number >= 100_000 ? 0 : 1)}K`;
-  return String(Math.round(number));
+function formatResetCredits(value) {
+  const count = value && value.availableCount;
+  return Number.isFinite(count) ? `${count} 次` : "--";
 }
 
 function formatCountdown(resetAt) {
@@ -560,11 +563,11 @@ function buildSmallWidget(payload, offline) {
   legend.addSpacer();
 
   widget.addSpacer(4);
-  const tokens = widget.addStack();
-  tokens.layoutHorizontally();
-  addText(tokens, `消耗 ${formatTokens(payload.tokens && payload.tokens.consumed)}`, Font.semiboldSystemFont(9), PALETTE.white);
-  tokens.addSpacer();
-  addText(tokens, `剩余 ${formatTokens(payload.tokens && payload.tokens.remaining)}`, Font.semiboldSystemFont(9), PALETTE.cyan);
+  const metrics = widget.addStack();
+  metrics.layoutHorizontally();
+  addText(metrics, `已用 ${Math.round(mainWindow.usedPercent)}%`, Font.semiboldSystemFont(9), PALETTE.white);
+  metrics.addSpacer();
+  addText(metrics, `重置 ${formatResetCredits(payload.resetCredits)}`, Font.semiboldSystemFont(9), PALETTE.cyan);
 
   widget.addSpacer(3);
   const footer = widget.addStack();
@@ -600,7 +603,7 @@ function addResetRow(parent, color, label, resetAt) {
   addText(row, formatCountdown(resetAt), Font.semiboldSystemFont(10), PALETTE.white);
 }
 
-/** 构建中号 Widget，展开 token 与服务端返回的重置倒计时。 */
+/** 构建中号 Widget，展开额度使用与服务端返回的重置信息。 */
 function buildMediumWidget(payload, offline) {
   const widget = new ListWidget();
   widget.setPadding(13, 15, 12, 15);
@@ -610,6 +613,7 @@ function buildMediumWidget(payload, offline) {
 
   const fiveHour = payload.limits.fiveHour;
   const week = payload.limits.week;
+  const mainWindow = week || fiveHour;
   const content = widget.addStack();
   content.layoutHorizontally();
 
@@ -627,9 +631,9 @@ function buildMediumWidget(payload, offline) {
   right.layoutVertically();
   const metrics = right.addStack();
   metrics.layoutHorizontally();
-  addMetricCard(metrics, "TOKEN 消耗", formatTokens(payload.tokens && payload.tokens.consumed), PALETTE.white);
+  addMetricCard(metrics, week ? "周已用" : "5H 已用", `${Math.round(mainWindow.usedPercent)}%`, PALETTE.white);
   metrics.addSpacer(6);
-  addMetricCard(metrics, "TOKEN 剩余", formatTokens(payload.tokens && payload.tokens.remaining), PALETTE.cyan);
+  addMetricCard(metrics, "重置额度", formatResetCredits(payload.resetCredits), PALETTE.cyan);
 
   right.addSpacer(8);
   if (fiveHour) addResetRow(right, PALETTE.magenta, "5 小时重置", fiveHour.resetAt);

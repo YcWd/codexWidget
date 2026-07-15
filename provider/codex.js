@@ -280,6 +280,12 @@ function normalizeWindow(window, now) {
   };
 }
 
+/** 提取接口返回的可用使用限制重置次数。 */
+function normalizeResetCredits(value) {
+  if (!value || !Number.isFinite(Number(value.available_count))) return null;
+  return { availableCount: Number(value.available_count) };
+}
+
 /** 按窗口时长识别 5 小时与周额度，兼容服务端只返回其中一个窗口。 */
 function classifyUsageWindows(rateLimit) {
   const entries = [
@@ -328,6 +334,7 @@ function normalizeUsage(usage, tokenUsage, now = new Date()) {
     },
     tokens: tokenUsage,
     credits: credits == null ? null : credits,
+    resetCredits: normalizeResetCredits(usage.rate_limit_reset_credits),
     error: null,
   };
 }
@@ -480,6 +487,7 @@ async function main(argv = process.argv.slice(2)) {
           limits: { fiveHour: null, week: null },
           tokens: null,
           credits: null,
+          resetCredits: null,
           error: serializeError(error),
         };
 
@@ -499,6 +507,7 @@ module.exports = {
   classifyUsageWindows,
   extractAccountId,
   normalizeUsage,
+  normalizeResetCredits,
   normalizeWindow,
   parseArgs,
   serializeError,

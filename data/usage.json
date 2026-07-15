@@ -31,6 +31,9 @@
     "capturedAt": "2026-07-15T02:29:42.000Z"
   },
   "credits": null,
+  "resetCredits": {
+    "availableCount": 2
+  },
   "error": {
     "code": "SAMPLE",
     "message": "示例数据，运行 provider 后会被真实数据覆盖",

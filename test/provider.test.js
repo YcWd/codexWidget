@@ -6,6 +6,7 @@ const {
   classifyUsageWindows,
   extractAccountId,
   normalizeUsage,
+  normalizeResetCredits,
   normalizeWindow,
   parseArgs,
 } = require("../provider/codex.js");
@@ -37,6 +38,7 @@ test("normalizeUsage produces the stable schema", () => {
   const now = new Date("2026-07-15T00:00:00.000Z");
   const result = normalizeUsage({
     plan_type: "plus",
+    rate_limit_reset_credits: { available_count: 2 },
     rate_limit: {
       primary_window: { used_percent: 20, limit_window_seconds: 18_000, reset_at: 1_768_000_000 },
       secondary_window: { used_percent: 40, limit_window_seconds: 604_800, reset_at: 1_768_500_000 },
@@ -48,6 +50,12 @@ test("normalizeUsage produces the stable schema", () => {
   assert.equal(result.limits.fiveHour.remainingPercent, 80);
   assert.equal(result.limits.week.remainingPercent, 60);
   assert.deepEqual(result.tokens, { consumed: 100, remaining: 200 });
+  assert.deepEqual(result.resetCredits, { availableCount: 2 });
+});
+
+test("normalizeResetCredits keeps the available reset count", () => {
+  assert.deepEqual(normalizeResetCredits({ available_count: 2 }), { availableCount: 2 });
+  assert.equal(normalizeResetCredits(null), null);
 });
 
 test("normalizeUsage accepts a weekly-only primary window", () => {
