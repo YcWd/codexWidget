@@ -509,9 +509,9 @@ function addRingBlock(parent, size, fiveHour, week) {
   ring.size = new Size(size, size);
   ring.backgroundImage = activityRingsImage(size, fiveHour, week);
   ring.layoutVertically();
-  ring.setPadding(size * 0.34, 0, 0, 0);
+  ring.addSpacer();
   addCenteredRingText(ring, `${Math.round(mainWindow.remainingPercent)}%`, Font.boldSystemFont(size * 0.18), PALETTE.white);
-  addCenteredRingText(ring, fiveHour ? "5H 剩余" : "周剩余", Font.semiboldSystemFont(size * 0.075), PALETTE.muted);
+  ring.addSpacer();
   return ring;
 }
 
