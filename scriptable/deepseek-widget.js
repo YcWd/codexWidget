@@ -7,6 +7,7 @@ const SETTINGS = {
   balanceURL: "https://api.deepseek.com/user/balance",
   apiKeyPage: "https://platform.deepseek.com/api_keys",
   billingPage: "https://platform.deepseek.com/transactions",
+  balanceTarget: 100,
   requestTimeout: 12,
   refreshMinutes: 15,
 };
@@ -251,8 +252,15 @@ function mixColor(start, end, amount) {
   return new Color(rgbToHex(start.map((value, index) => value + (end[index] - value) * amount)));
 }
 
-/** 绘制表示账户可调用状态的 DeepSeek 渐变圆环。 */
-function balanceRingImage(size, available) {
+/** 按 100 元满额计算余额圆环百分比。 */
+function balancePercent(total) {
+  const amount = Number(total);
+  if (!Number.isFinite(amount)) return 0;
+  return Math.min(100, Math.max(0, amount / SETTINGS.balanceTarget * 100));
+}
+
+/** 按余额百分比绘制 DeepSeek 渐变圆环。 */
+function balanceRingImage(size, percent, available) {
   const context = new DrawContext();
   context.size = new Size(size, size);
   context.opaque = false;
@@ -261,7 +269,7 @@ function balanceRingImage(size, available) {
   const radius = size * 0.36;
   const width = size * 0.105;
   const segments = 150;
-  const activeSegments = available ? segments : Math.round(segments * 0.08);
+  const activeSegments = Math.round(segments * percent / 100);
 
   context.setFillColor(new Color("#FFFFFF", 0.095));
   for (let index = 0; index < segments; index += 1) {
@@ -294,7 +302,7 @@ function balanceRingImage(size, available) {
 function addBalanceRing(parent, size, data) {
   const ring = parent.addStack();
   ring.size = new Size(size, size);
-  ring.backgroundImage = balanceRingImage(size, data.available);
+  ring.backgroundImage = balanceRingImage(size, balancePercent(data.balance.total), data.available);
   ring.layoutVertically();
   ring.addSpacer();
 
@@ -385,7 +393,7 @@ function buildSmallWidget(data, offline) {
 
   const ringRow = widget.addStack();
   ringRow.addSpacer();
-  addBalanceRing(ringRow, 74, data);
+  addBalanceRing(ringRow, 84, data);
   ringRow.addSpacer();
 
   widget.addSpacer(3);
@@ -421,7 +429,7 @@ function buildMediumWidget(data, offline) {
   content.layoutHorizontally();
   const left = content.addStack();
   left.layoutVertically();
-  addBalanceRing(left, 96, data);
+  addBalanceRing(left, 108, data);
 
   content.addSpacer(15);
   const right = content.addStack();
@@ -448,8 +456,6 @@ function buildMediumWidget(data, offline) {
   addInfoRow(right, "账户状态", data.available ? "API 可调用" : "余额不足", data.available ? PALETTE.green : PALETTE.red);
   right.addSpacer(6);
   addInfoRow(right, "结算币种", data.balance.currency, PALETTE.blue);
-  right.addSpacer();
-  addText(right, `数据更新于 ${formatUpdatedAt(data.updatedAt)}`, Font.mediumSystemFont(8), PALETTE.dim);
   return widget;
 }
 

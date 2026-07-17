@@ -444,16 +444,12 @@ function formatResetCredits(value) {
   return Number.isFinite(count) ? `${count} 次` : "--";
 }
 
-function formatCountdown(resetAt) {
+/** 将额度重置时间格式化为手机本地日期。 */
+function formatResetAt(resetAt) {
   if (!resetAt) return "--";
-  const seconds = Math.max(0, Math.floor((new Date(resetAt).getTime() - Date.now()) / 1000));
-  if (seconds === 0) return "即将重置";
-  const days = Math.floor(seconds / 86400);
-  const hours = Math.floor(seconds % 86400 / 3600);
-  const minutes = Math.floor(seconds % 3600 / 60);
-  if (days > 0) return `${days}天 ${hours}小时`;
-  if (hours > 0) return `${hours}小时 ${minutes}分`;
-  return `${Math.max(1, minutes)}分钟`;
+  const formatter = new DateFormatter();
+  formatter.dateFormat = "MM-dd HH:mm";
+  return `于${formatter.string(new Date(resetAt))} 重置`;
 }
 
 function formatUpdatedAt(value) {
@@ -483,15 +479,6 @@ function addStatusBadge(parent, offline) {
     Font.semiboldSystemFont(8),
     offline ? PALETTE.orange : PALETTE.cyan,
   );
-}
-
-function addLegendItem(parent, color, label, percent) {
-  const item = parent.addStack();
-  item.layoutHorizontally();
-  item.centerAlignContent();
-  addText(item, "●", Font.systemFont(7), color);
-  item.addSpacer(3);
-  addText(item, `${label} ${Math.round(percent)}%`, Font.semiboldSystemFont(9), PALETTE.white);
 }
 
 /** 在圆环 Stack 内创建水平居中的文字行。 */
@@ -548,19 +535,11 @@ function buildSmallWidget(payload, offline) {
   const fiveHour = payload.limits.fiveHour;
   const week = payload.limits.week;
   const mainWindow = fiveHour || week;
+  const resetWindow = week || fiveHour;
   const ringRow = widget.addStack();
   ringRow.addSpacer();
-  addRingBlock(ringRow, 74, fiveHour, week);
+  addRingBlock(ringRow, 84, fiveHour, week);
   ringRow.addSpacer();
-
-  const legend = widget.addStack();
-  legend.layoutHorizontally();
-  legend.centerAlignContent();
-  legend.addSpacer();
-  if (fiveHour) addLegendItem(legend, PALETTE.magenta, "5H", fiveHour.remainingPercent);
-  if (fiveHour && week) legend.addSpacer(8);
-  if (week) addLegendItem(legend, PALETTE.lime, "周", week.remainingPercent);
-  legend.addSpacer();
 
   widget.addSpacer(4);
   const metrics = widget.addStack();
@@ -572,9 +551,12 @@ function buildSmallWidget(payload, offline) {
   widget.addSpacer(3);
   const footer = widget.addStack();
   footer.layoutHorizontally();
-  addText(footer, `${fiveHour ? "5H" : "周"} 重置 ${formatCountdown(mainWindow.resetAt)}`, Font.mediumSystemFont(8), PALETTE.muted);
-  footer.addSpacer();
-  addText(footer, `更新 ${formatUpdatedAt(payload.updatedAt)}`, Font.mediumSystemFont(8), PALETTE.dim);
+  addText(
+    footer,
+    `${week ? "周额度" : "5H 额度"} ${formatResetAt(resetWindow.resetAt)}`,
+    Font.mediumSystemFont(8),
+    PALETTE.muted,
+  );
   return widget;
 }
 
@@ -600,7 +582,7 @@ function addResetRow(parent, color, label, resetAt) {
   row.addSpacer(5);
   addText(row, label, Font.mediumSystemFont(9), PALETTE.muted);
   row.addSpacer();
-  addText(row, formatCountdown(resetAt), Font.semiboldSystemFont(10), PALETTE.white);
+  addText(row, formatResetAt(resetAt), Font.semiboldSystemFont(10), PALETTE.white);
 }
 
 /** 构建中号 Widget，展开额度使用与服务端返回的重置信息。 */
@@ -619,12 +601,7 @@ function buildMediumWidget(payload, offline) {
 
   const left = content.addStack();
   left.layoutVertically();
-  addRingBlock(left, 92, fiveHour, week);
-  const legend = left.addStack();
-  legend.layoutHorizontally();
-  if (fiveHour) addLegendItem(legend, PALETTE.magenta, "5H", fiveHour.remainingPercent);
-  if (fiveHour && week) legend.addSpacer(7);
-  if (week) addLegendItem(legend, PALETTE.lime, "周", week.remainingPercent);
+  addRingBlock(left, 108, fiveHour, week);
 
   content.addSpacer(14);
   const right = content.addStack();
@@ -636,11 +613,9 @@ function buildMediumWidget(payload, offline) {
   addMetricCard(metrics, "重置额度", formatResetCredits(payload.resetCredits), PALETTE.cyan);
 
   right.addSpacer(8);
-  if (fiveHour) addResetRow(right, PALETTE.magenta, "5 小时重置", fiveHour.resetAt);
+  if (fiveHour) addResetRow(right, PALETTE.magenta, "5 小时额度", fiveHour.resetAt);
   if (fiveHour && week) right.addSpacer(5);
-  if (week) addResetRow(right, PALETTE.lime, "周额度重置", week.resetAt);
-  right.addSpacer();
-  addText(right, `数据更新于 ${formatUpdatedAt(payload.updatedAt)}`, Font.mediumSystemFont(8), PALETTE.dim);
+  if (week) addResetRow(right, PALETTE.lime, "周额度", week.resetAt);
   return widget;
 }
 
