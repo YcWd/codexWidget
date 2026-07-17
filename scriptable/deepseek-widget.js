@@ -13,17 +13,17 @@ const SETTINGS = {
 };
 
 const PALETTE = {
-  white: new Color("#F7FAFF"),
-  muted: new Color("#A8B4C8"),
-  dim: new Color("#6F7D94"),
-  blue: new Color("#4D8DFF"),
-  cyan: new Color("#35D7E7"),
-  green: new Color("#5EE6A8"),
-  orange: new Color("#FFB340"),
-  red: new Color("#FF5C78"),
-  track: new Color("#343941"),
-  card: new Color("#FFFFFF", 0.075),
-  cardBorder: new Color("#FFFFFF", 0.12),
+  primary: new Color("#172033"),
+  muted: new Color("#667085"),
+  dim: new Color("#98A2B3"),
+  blue: new Color("#276FE8"),
+  cyan: new Color("#008CA8"),
+  green: new Color("#14805E"),
+  orange: new Color("#C76B00"),
+  red: new Color("#D62F50"),
+  track: new Color("#DCE2E9"),
+  card: new Color("#FFFFFF", 0.78),
+  cardBorder: new Color("#D7DEE8"),
 };
 
 /** 返回手机本地缓存文件路径。 */
@@ -314,7 +314,7 @@ function addBalanceRing(parent, size, data) {
     valueRow,
     formatMoney(data.balance.total, data.balance.currency),
     Font.boldSystemFont(size * 0.145),
-    PALETTE.white,
+    PALETTE.primary,
   );
   valueRow.addSpacer();
 
@@ -329,7 +329,7 @@ function addBalanceRing(parent, size, data) {
 
 function configureBackground(widget) {
   const gradient = new LinearGradient();
-  gradient.colors = [new Color("#060A13"), new Color("#101A30"), new Color("#072029")];
+  gradient.colors = [new Color("#FBFCFF"), new Color("#EEF4FF"), new Color("#E8F8FB")];
   gradient.locations = [0, 0.58, 1];
   gradient.startPoint = new Point(0, 0);
   gradient.endPoint = new Point(1, 1);
@@ -352,7 +352,7 @@ function addHeader(widget, data, offline, compact) {
   const header = widget.addStack();
   header.layoutHorizontally();
   header.centerAlignContent();
-  addText(header, "DEEPSEEK", Font.boldSystemFont(compact ? 11 : 13), PALETTE.white);
+  addText(header, "DEEPSEEK", Font.boldSystemFont(compact ? 11 : 13), PALETTE.primary);
   header.addSpacer(6);
   addText(header, "API", Font.mediumSystemFont(8), PALETTE.dim);
   header.addSpacer();
@@ -382,7 +382,7 @@ function addInfoRow(parent, label, value, color) {
   row.centerAlignContent();
   addText(row, label, Font.mediumSystemFont(9), PALETTE.muted);
   row.addSpacer();
-  addText(row, value, Font.semiboldSystemFont(10), color || PALETTE.white);
+  addText(row, value, Font.semiboldSystemFont(10), color || PALETTE.primary);
 }
 
 /** 构建 DeepSeek 小号余额 Widget。 */
@@ -405,7 +405,7 @@ function buildSmallWidget(data, offline) {
     metrics,
     "充值",
     formatMoney(data.balance.toppedUp, data.balance.currency),
-    PALETTE.white,
+    PALETTE.primary,
     true,
   );
   metrics.addSpacer(5);
@@ -442,7 +442,7 @@ function buildMediumWidget(data, offline) {
     metrics,
     "充值余额",
     formatMoney(data.balance.toppedUp, data.balance.currency),
-    PALETTE.white,
+    PALETTE.primary,
     false,
   );
   metrics.addSpacer(6);
@@ -465,9 +465,9 @@ function buildLoginWidget(message) {
   const widget = new ListWidget();
   widget.setPadding(16, 16, 16, 16);
   configureBackground(widget);
-  addText(widget, "DEEPSEEK", Font.boldSystemFont(13), PALETTE.white);
+  addText(widget, "DEEPSEEK", Font.boldSystemFont(13), PALETTE.primary);
   widget.addSpacer();
-  addText(widget, "尚未登录", Font.boldSystemFont(17), PALETTE.white);
+  addText(widget, "尚未登录", Font.boldSystemFont(17), PALETTE.primary);
   widget.addSpacer(5);
   addText(widget, message, Font.systemFont(10), PALETTE.muted, 3);
   widget.addSpacer();
@@ -479,9 +479,9 @@ function buildErrorWidget(message) {
   const widget = new ListWidget();
   widget.setPadding(16, 16, 16, 16);
   configureBackground(widget);
-  addText(widget, "DEEPSEEK", Font.boldSystemFont(13), PALETTE.white);
+  addText(widget, "DEEPSEEK", Font.boldSystemFont(13), PALETTE.primary);
   widget.addSpacer();
-  addText(widget, "余额获取失败", Font.boldSystemFont(17), PALETTE.white);
+  addText(widget, "余额获取失败", Font.boldSystemFont(17), PALETTE.primary);
   widget.addSpacer(5);
   addText(widget, message, Font.systemFont(10), PALETTE.muted, 3);
   widget.addSpacer();

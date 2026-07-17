@@ -22,16 +22,16 @@ const CODEX_AUTH = {
 };
 
 const PALETTE = {
-  white: new Color("#F7FAFF"),
-  muted: new Color("#A8B1C2"),
-  dim: new Color("#747F92"),
+  primary: new Color("#172033"),
+  muted: new Color("#667085"),
+  dim: new Color("#98A2B3"),
   magenta: new Color("#FF375F"),
-  orange: new Color("#FF9F0A"),
-  lime: new Color("#B7F700"),
-  cyan: new Color("#30D8C8"),
-  track: new Color("#343941"),
-  card: new Color("#FFFFFF", 0.075),
-  cardBorder: new Color("#FFFFFF", 0.12),
+  orange: new Color("#C76B00"),
+  lime: new Color("#72B900"),
+  cyan: new Color("#008F96"),
+  track: new Color("#DCE2E9"),
+  card: new Color("#FFFFFF", 0.78),
+  cardBorder: new Color("#D7DEE8"),
 };
 
 /** 读取 iCloud Documents 中的 usage.json。 */
@@ -497,14 +497,14 @@ function addRingBlock(parent, size, fiveHour, week) {
   ring.backgroundImage = activityRingsImage(size, fiveHour, week);
   ring.layoutVertically();
   ring.addSpacer();
-  addCenteredRingText(ring, `${Math.round(mainWindow.remainingPercent)}%`, Font.boldSystemFont(size * 0.18), PALETTE.white);
+  addCenteredRingText(ring, `${Math.round(mainWindow.remainingPercent)}%`, Font.boldSystemFont(size * 0.18), PALETTE.primary);
   ring.addSpacer();
   return ring;
 }
 
 function configureBackground(widget) {
   const gradient = new LinearGradient();
-  gradient.colors = [new Color("#06070B"), new Color("#121825"), new Color("#071316")];
+  gradient.colors = [new Color("#FBFCFF"), new Color("#EFF4FC"), new Color("#E9F8F4")];
   gradient.locations = [0, 0.58, 1];
   gradient.startPoint = new Point(0, 0);
   gradient.endPoint = new Point(1, 1);
@@ -515,7 +515,7 @@ function addHeader(widget, payload, offline, compact) {
   const header = widget.addStack();
   header.layoutHorizontally();
   header.centerAlignContent();
-  addText(header, "CODEX", Font.boldSystemFont(compact ? 11 : 13), PALETTE.white);
+  addText(header, "CODEX", Font.boldSystemFont(compact ? 11 : 13), PALETTE.primary);
   header.addSpacer(6);
   addText(header, String(payload.account && payload.account.plan || "").toUpperCase(), Font.mediumSystemFont(8), PALETTE.dim);
   header.addSpacer();
@@ -544,7 +544,7 @@ function buildSmallWidget(payload, offline) {
   widget.addSpacer(4);
   const metrics = widget.addStack();
   metrics.layoutHorizontally();
-  addText(metrics, `已用 ${Math.round(mainWindow.usedPercent)}%`, Font.semiboldSystemFont(9), PALETTE.white);
+  addText(metrics, `已用 ${Math.round(mainWindow.usedPercent)}%`, Font.semiboldSystemFont(9), PALETTE.primary);
   metrics.addSpacer();
   addText(metrics, `重置 ${formatResetCredits(payload.resetCredits)}`, Font.semiboldSystemFont(9), PALETTE.cyan);
 
@@ -583,7 +583,7 @@ function addResetRow(parent, color, label, resetAt) {
   row.addSpacer(5);
   addText(row, label, Font.mediumSystemFont(9), PALETTE.muted);
   row.addSpacer();
-  addText(row, formatResetAt(resetAt), Font.semiboldSystemFont(10), PALETTE.white);
+  addText(row, formatResetAt(resetAt), Font.semiboldSystemFont(10), PALETTE.primary);
 }
 
 /** 构建中号 Widget，展开额度使用与服务端返回的重置信息。 */
@@ -609,7 +609,7 @@ function buildMediumWidget(payload, offline) {
   right.layoutVertically();
   const metrics = right.addStack();
   metrics.layoutHorizontally();
-  addMetricCard(metrics, week ? "周已用" : "5H 已用", `${Math.round(mainWindow.usedPercent)}%`, PALETTE.white);
+  addMetricCard(metrics, week ? "周已用" : "5H 已用", `${Math.round(mainWindow.usedPercent)}%`, PALETTE.primary);
   metrics.addSpacer(6);
   addMetricCard(metrics, "重置额度", formatResetCredits(payload.resetCredits), PALETTE.cyan);
 
@@ -624,9 +624,9 @@ function buildErrorWidget(message) {
   const widget = new ListWidget();
   widget.setPadding(16, 16, 16, 16);
   configureBackground(widget);
-  addText(widget, "CODEX", Font.boldSystemFont(13), PALETTE.white);
+  addText(widget, "CODEX", Font.boldSystemFont(13), PALETTE.primary);
   widget.addSpacer();
-  addText(widget, "暂无用量数据", Font.boldSystemFont(16), PALETTE.white);
+  addText(widget, "暂无用量数据", Font.boldSystemFont(16), PALETTE.primary);
   widget.addSpacer(5);
   addText(widget, message, Font.systemFont(10), PALETTE.muted, 3);
   widget.addSpacer();
