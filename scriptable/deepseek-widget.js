@@ -21,6 +21,7 @@ const PALETTE = {
   green: new Color("#5EE6A8"),
   orange: new Color("#FFB340"),
   red: new Color("#FF5C78"),
+  track: new Color("#343941"),
   card: new Color("#FFFFFF", 0.075),
   cardBorder: new Color("#FFFFFF", 0.12),
 };
@@ -271,7 +272,7 @@ function balanceRingImage(size, percent, available) {
   const segments = 150;
   const activeSegments = Math.round(segments * percent / 100);
 
-  context.setFillColor(new Color("#FFFFFF", 0.095));
+  context.setFillColor(PALETTE.track);
   for (let index = 0; index < segments; index += 1) {
     const angle = -Math.PI / 2 + index / segments * Math.PI * 2;
     context.fillEllipse(new Rect(
@@ -363,8 +364,9 @@ function addHeader(widget, data, offline, compact) {
 function addMetricCard(parent, label, value, color, compact) {
   const card = parent.addStack();
   card.layoutVertically();
-  card.setPadding(compact ? 5 : 7, compact ? 7 : 9, compact ? 5 : 7, compact ? 7 : 9);
-  card.cornerRadius = 11;
+  if (!compact) card.size = new Size(84, 56);
+  card.setPadding(compact ? 5 : 8, compact ? 7 : 10, compact ? 5 : 7, compact ? 7 : 10);
+  card.cornerRadius = compact ? 11 : 13;
   card.backgroundColor = PALETTE.card;
   card.borderColor = PALETTE.cardBorder;
   card.borderWidth = 0.5;

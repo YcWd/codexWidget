@@ -29,6 +29,7 @@ const PALETTE = {
   orange: new Color("#FF9F0A"),
   lime: new Color("#B7F700"),
   cyan: new Color("#30D8C8"),
+  track: new Color("#343941"),
   card: new Color("#FFFFFF", 0.075),
   cardBorder: new Color("#FFFFFF", 0.12),
 };
@@ -399,10 +400,9 @@ function mixColor(start, end, amount) {
 /** 用重叠圆点绘制带圆角端点的 Fitness 风格进度环。 */
 function drawRing(context, center, radius, width, percent, startColor, endColor) {
   const segments = 140;
-  const trackColor = new Color("#FFFFFF", 0.095);
   const progressSegments = Math.round(segments * clamp(percent, 0, 100) / 100);
 
-  context.setFillColor(trackColor);
+  context.setFillColor(PALETTE.track);
   for (let index = 0; index < segments; index += 1) {
     const angle = -Math.PI / 2 + index / segments * Math.PI * 2;
     const x = center + Math.cos(angle) * radius - width / 2;
@@ -563,8 +563,9 @@ function buildSmallWidget(payload, offline) {
 function addMetricCard(parent, label, value, color) {
   const card = parent.addStack();
   card.layoutVertically();
-  card.setPadding(7, 8, 6, 8);
-  card.cornerRadius = 11;
+  card.size = new Size(82, 54);
+  card.setPadding(8, 10, 7, 10);
+  card.cornerRadius = 13;
   card.backgroundColor = PALETTE.card;
   card.borderColor = PALETTE.cardBorder;
   card.borderWidth = 0.5;
