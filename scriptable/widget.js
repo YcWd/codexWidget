@@ -468,11 +468,19 @@ function addText(stack, value, font, color, lineLimit) {
   return text;
 }
 
-function addStatusBadge(parent, offline) {
+/** 生成用于手动刷新的当前脚本链接。 */
+function widgetRefreshURL() {
+  const url = URLScheme.forRunningScript();
+  return `${url}${url.includes("?") ? "&" : "?"}refresh=1`;
+}
+
+/** 创建状态标签，并在中号 Widget 上提供独立刷新入口。 */
+function addStatusBadge(parent, offline, compact) {
   const badge = parent.addStack();
   badge.setPadding(3, 7, 3, 7);
   badge.cornerRadius = 8;
   badge.backgroundColor = offline ? new Color("#FF9F0A", 0.16) : new Color("#30D8C8", 0.13);
+  if (!compact) badge.url = widgetRefreshURL();
   addText(
     badge,
     offline ? "离线" : "在线",
@@ -519,7 +527,7 @@ function addHeader(widget, payload, offline, compact) {
   header.addSpacer(6);
   addText(header, String(payload.account && payload.account.plan || "").toUpperCase(), Font.mediumSystemFont(8), PALETTE.dim);
   header.addSpacer();
-  addStatusBadge(header, offline);
+  addStatusBadge(header, offline, compact);
   header.addSpacer(6);
   addText(header, formatUpdatedAt(payload.updatedAt), Font.mediumSystemFont(8), PALETTE.muted);
 }

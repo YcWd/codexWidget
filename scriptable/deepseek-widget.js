@@ -336,11 +336,19 @@ function configureBackground(widget) {
   widget.backgroundGradient = gradient;
 }
 
-function addStatusBadge(parent, data, offline) {
+/** 生成用于手动刷新的当前脚本链接。 */
+function widgetRefreshURL() {
+  const url = URLScheme.forRunningScript();
+  return `${url}${url.includes("?") ? "&" : "?"}refresh=1`;
+}
+
+/** 创建状态标签，并在中号 Widget 上提供独立刷新入口。 */
+function addStatusBadge(parent, data, offline, compact) {
   const available = data && data.available;
   const badge = parent.addStack();
   badge.setPadding(3, 7, 3, 7);
   badge.cornerRadius = 8;
+  if (!compact) badge.url = widgetRefreshURL();
   const color = offline ? PALETTE.orange : available ? PALETTE.green : PALETTE.red;
   badge.backgroundColor = offline
     ? new Color("#FFB340", 0.14)
@@ -356,7 +364,7 @@ function addHeader(widget, data, offline, compact) {
   header.addSpacer(6);
   addText(header, "API", Font.mediumSystemFont(8), PALETTE.dim);
   header.addSpacer();
-  addStatusBadge(header, data, offline);
+  addStatusBadge(header, data, offline, compact);
   header.addSpacer(6);
   addText(header, formatUpdatedAt(data.updatedAt), Font.mediumSystemFont(8), PALETTE.muted);
 }
@@ -492,10 +500,11 @@ function buildErrorWidget(message) {
 /** 管理登录状态、加载数据并渲染对应尺寸。 */
 async function main() {
   const previewFamily = args.queryParameters && args.queryParameters.family;
+  const refreshRequested = args.queryParameters && args.queryParameters.refresh === "1";
   const family = config.widgetFamily || previewFamily || "medium";
   let apiKey = readApiKey();
 
-  if (config.runsInApp) {
+  if (config.runsInApp && !refreshRequested) {
     apiKey = apiKey ? await presentAccountMenu(apiKey) : await presentLoginGuide();
     if (!apiKey) {
       Script.complete();
@@ -517,7 +526,6 @@ async function main() {
     }
   }
 
-  widget.url = URLScheme.forRunningScript();
   widget.refreshAfterDate = new Date(Date.now() + SETTINGS.refreshMinutes * 60 * 1000);
   if (config.runsInWidget) {
     Script.setWidget(widget);
